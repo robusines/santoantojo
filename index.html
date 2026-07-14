@@ -214,6 +214,17 @@
     background:var(--cream);color:var(--black);
     border-color:var(--cream);font-weight:600;
   }
+  .catnav button.promo-nav{
+    background:linear-gradient(135deg, var(--chili), var(--gold));
+    color:var(--black);
+    border-color:transparent;
+    font-weight:700;
+  }
+  .catnav button.promo-nav.active{
+    background:linear-gradient(135deg, var(--chili), var(--gold));
+    color:var(--black);
+    border-color:transparent;
+  }
 
   /* ---------- menu ---------- */
   main{max-width:920px;margin:0 auto;padding:10px 20px 120px;}
@@ -708,7 +719,7 @@
         <svg width="20" height="20"><use href="#ic-star"/></svg>
         <svg width="20" height="20"><use href="#ic-star"/></svg>
       </div>
-      <div class="review-title display">¿Te encantó tu antojo?</div>
+      <div class="review-title display">¿Te gustó Santo Antojo?</div>
       <p class="review-copy">Cuéntaselo a Google en 30 segundos. Nos ayuda muchísimo a seguir creciendo.</p>
       <a class="btn-primary review-btn" href="https://www.google.com/maps?cid=17150265813675554040" target="_blank" rel="noopener">Dejar reseña en Google</a>
     </div>
@@ -915,6 +926,14 @@ function updateCatnavEdges(){
 catnav.addEventListener('scroll', updateCatnavEdges, {passive:true});
 window.addEventListener('resize', updateCatnavEdges);
 
+const promoNavBtn = document.createElement('button');
+promoNavBtn.className = 'promo-nav';
+promoNavBtn.innerHTML = '🔥 2x1';
+promoNavBtn.setAttribute('aria-label', 'Ver promoción 2x1 de tacos al pastor');
+promoNavBtn.dataset.target = 'nav-pastor';
+promoNavBtn.onclick = ()=>document.getElementById('nav-pastor').scrollIntoView({behavior:'smooth', block:'start'});
+catnav.appendChild(promoNavBtn);
+
 MENU.forEach(sec=>{
   const b = document.createElement('button');
   b.textContent = sec.nav;
@@ -977,6 +996,9 @@ function renderControls(){
   document.querySelectorAll('[data-slot]').forEach(slot=>{
     const key = slot.dataset.slot;
     const qty = cart[key]?.qty || 0;
+    const {it} = itemLookup(key);
+    const isPromo = !!it.promo;
+    const qtyLabel = isPromo ? `${qty} para ${qty*2}` : qty;
     if(qty === 0){
       slot.innerHTML = `<button class="add-btn" onclick="addItem('${key.replace(/'/g,"\\'")}', event)">
         <svg width="13" height="13"><use href="#ic-sparkle"/></svg> Agregar
@@ -984,7 +1006,7 @@ function renderControls(){
     } else {
       slot.innerHTML = `<div class="stepper">
         <button onclick="changeQty('${key.replace(/'/g,"\\'")}', -1)">−</button>
-        <span>${qty}</span>
+        <span>${qtyLabel}</span>
         <button onclick="changeQty('${key.replace(/'/g,"\\'")}', 1)">+</button>
       </div>`;
     }
@@ -995,7 +1017,7 @@ updateCatnavEdges();
 
 function addItem(key, evt){
   const {sec, it} = itemLookup(key);
-  if(!cart[key]) cart[key] = {n:it.n, p:it.p, qty:0, section:sec.title};
+  if(!cart[key]) cart[key] = {n:it.n, p:it.p, qty:0, section:sec.title, promo:!!it.promo};
   cart[key].qty += 1;
   renderControls();
   updateCartUI();
@@ -1178,7 +1200,7 @@ function renderCartView(){
       <div class="cl-right">
         <div class="stepper" style="background:var(--card);border:1px solid var(--line-strong);">
           <button style="background:var(--card-2);" onclick="changeQty('${i.key.replace(/'/g,"\\'")}', -1)">−</button>
-          <span style="color:var(--cream);">${i.qty}</span>
+          <span style="color:var(--cream);">${i.promo ? `${i.qty} para ${i.qty*2}` : i.qty}</span>
           <button style="background:var(--card-2);" onclick="changeQty('${i.key.replace(/'/g,"\\'")}', 1)">+</button>
         </div>
         <button class="cl-remove" onclick="removeItem('${i.key.replace(/'/g,"\\'")}')">Quitar</button>
@@ -1296,7 +1318,7 @@ function sendOrder(){
     return;
   }
 
-  const lines = cartArray().map(i=>`${i.qty}x ${i.n} — ${fmt(i.p*i.qty)}`).join('\n');
+  const lines = cartArray().map(i=>`${i.promo ? `${i.qty} para ${i.qty*2}` : i.qty+'x'} ${i.n} — ${fmt(i.p*i.qty)}`).join('\n');
   let msg = `🌮 *Nuevo pedido — Santo Antojo*\n\n`;
   msg += `*Cliente:* ${formState.name}\n`;
   msg += `*Teléfono:* ${formState.phone}\n`;
